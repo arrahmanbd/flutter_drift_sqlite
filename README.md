@@ -91,6 +91,320 @@ class AppDatabase extends _$AppDatabase {
 }
 ```
 3. You are ready to use AppDatabase.
+## CheatSheet
+### **1\. Setting Up Drift**
+
+**Add Dependencies:**
+
+```yaml
+dependencies:
+  drift: ^<latest_version>
+  sqlite3_flutter_libs: ^<latest_version>
+  path_provider: ^<latest_version>
+
+dev_dependencies:
+  drift_dev: ^<latest_version>
+  build_runner: ^<latest_version>
+```
+
+### **2\. Defining Tables**
+
+**Creating a Table:**
+
+```dart
+import 'package:drift/drift.dart';
+
+class Songs extends Table {
+  IntColumn get id => integer().autoIncrement()(); // Primary Key
+  TextColumn get title => text()();
+  TextColumn get artist => text().nullable()();
+  RealColumn get durationMs => real()();
+  TextColumn get album => text().nullable()();
+  TextColumn get genre => text().nullable()();
+  TextColumn get folder => text()();
+}
+```
+
+### **3\. Setting Up the Database**
+
+**Creating the Database Class:**
+
+```dart
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'dart:io';
+
+part 'app_database.g.dart'; // Generated file
+
+LazyDatabase _openConnection() {
+  return LazyDatabase(() async {
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dbFolder.path, 'app.db'));
+    return NativeDatabase(file);
+  });
+}
+
+@DriftDatabase(tables: [Songs])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(_openConnection());
+
+  @override
+  int get schemaVersion => 1;
+}
+```
+
+### **4\. Inserting Data**
+
+**Insert a Single Row:**
+
+```dart
+Future<int> insertSong(SongsCompanion song) {
+  return into(songs).insert(song);
+}
+
+final song = SongsCompanion(
+  title: Value('Song Title'),
+  artist: Value('Artist Name'),
+  durationMs: Value(210000.0),
+  album: Value('Album Name'),
+  genre: Value('Genre'),
+  folder: Value('/music/folder'),
+);
+
+await insertSong(song);
+```
+
+**Insert Multiple Rows:**
+
+```dart
+Future<void> insertSongs(List<SongsCompanion> songList) async {
+  await batch((batch) {
+    batch.insertAll(songs, songList);
+  });
+}
+```
+
+### **5\. Querying Data**
+
+**Get All Rows:**
+
+```dart
+Future<List<Song>> getAllSongs() {
+  return select(songs).get();
+}
+```
+
+**Get a Specific Row by Condition:**
+
+```dart
+Future<Song?> getSongById(int id) {
+  return (select(songs)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+}
+```
+
+**Query with Multiple Conditions:**
+
+```dart
+Future<List<Song>> getSongsByArtistAndAlbum(String artist, String album) {
+  return (select(songs)
+    ..where((tbl) => tbl.artist.equals(artist))
+    ..where((tbl) => tbl.album.equals(album))
+  ).get();
+}
+```
+
+**Query with Sorting:**
+
+```dart
+Future<List<Song>> getAllSongsSortedByTitle() {
+  return (select(songs)
+    ..orderBy([
+      (tbl) => OrderingTerm(expression: tbl.title, mode: OrderingMode.asc)
+    ])
+  ).get();
+}
+```
+
+**Get Distinct Values:**
+
+```dart
+Future<List<String>> getAllDistinctArtists() {
+  return (selectOnly(songs, distinct: true)
+    ..addColumns([songs.artist])
+  ).map((row) => row.read(songs.artist)!).get();
+}
+```
+
+### **6\. Updating Data**
+
+**Update a Single Row:**
+
+```dart
+Future<bool> updateSong(Song song) {
+  return update(songs).replace(song);
+}
+```
+
+**Update Specific Fields:**
+
+```dart
+Future<int> updateSongTitle(int id, String newTitle) {
+  return (update(songs)
+    ..where((tbl) => tbl.id.equals(id))
+  ).write(SongsCompanion(
+    title: Value(newTitle),
+  ));
+}
+```
+
+### **7\. Deleting Data**
+
+**Delete a Single Row:**
+
+```dart
+Future<int> deleteSongById(int id) {
+  return (delete(songs)..where((tbl) => tbl.id.equals(id))).go();
+}
+```
+
+**Delete Multiple Rows:**
+
+```dart
+Future<int> deleteSongsByArtist(String artist) {
+  return (delete(songs)..where((tbl) => tbl.artist.equals(artist))).go();
+}
+```
+
+**Delete All Rows:**
+
+```dart
+Future<int> deleteAllSongs() {
+  return delete(songs).go();
+}
+```
+
+### **8\. Batch Operations**
+
+**Inserting, Updating, or Deleting in Batch:**
+
+```dart
+Future<void> performBatchOperations(List<SongsCompanion> newSongs, int songIdToUpdate) async {
+  await batch((batch) {
+    batch.insertAll(songs, newSongs);
+    batch.update(songs, SongsCompanion(title: Value('Updated Title')),
+      where: (tbl) => tbl.id.equals(songIdToUpdate));
+    batch.deleteWhere(songs, (tbl) => tbl.artist.equals('Artist Name'));
+  });
+}
+```
+
+### **9\. Database Migration**
+
+**Add a Migration:**
+
+```dart
+@override
+MigrationStrategy get migration => MigrationStrategy(
+  onUpgrade: (migrator, from, to) async {
+    if (from == 1) {
+      await migrator.addColumn(songs, songs.newColumn);
+    }
+  },
+);
+```
+
+### **10\. Closing the Database**
+
+**Close the Database:**
+
+```dart
+Future<void> closeDatabase() async {
+  await _db.close();
+}
+```
+
+### **11\. Running the Generator**
+
+**Run the Drift Code Generator:**
+
+```bash
+flutter pub run build_runner build
+```
+
+### **12\. Advanced Queries**
+
+**Joins:**
+
+```dart
+Future<List<SongWithArtist>> getSongsWithArtist() {
+  final query = select(songs).join([
+    innerJoin(artists, artists.id.equalsExp(songs.artistId)),
+  ]);
+
+  return query.map((row) {
+    return SongWithArtist(
+      song: row.readTable(songs),
+      artist: row.readTable(artists),
+    );
+  }).get();
+}
+```
+
+**Aggregates (e.g., Counting Rows):**
+
+```dart
+Future<int> getSongCount() {
+  return (selectOnly(songs)..addColumns([songs.id.count()])).map((row) => row.read<int>(songs.id.count())!).getSingle();
+}
+```
+
+### **13\. Handling Null Values**
+
+**Handling Nullable Columns:**
+
+```dart
+Future<List<String>> getAllGenres() async {
+  final queryResult = await (selectOnly(songs, distinct: true)
+    ..addColumns([songs.genre])
+  ).map((row) => row.read(songs.genre)).get();
+
+  return queryResult.whereType<String>().toList(); // Filters out null values
+}
+```
+
+### **14\. Error Handling**
+
+**Try-Catch Block:**
+
+```dart
+try {
+  final songs = await getAllSongs();
+  // Use the songs
+} catch (e) {
+  print('Error: $e');
+}
+```
+
+### **15\. Debugging**
+
+**Enabling Logging:**
+
+```dart
+@override
+StreamQueryUpdateRules get streamUpdateRules => StreamQueryUpdateRules([
+  // Log all queries
+]);
+
+@override
+QueryExecutor createExecutor() {
+  return NativeDatabase.memory(logStatements: true);
+}
+```
+
+This cheat sheet covers the most common operations you'll need while working with Drift. It provides a solid foundation for managing and querying your SQLite database in a Flutter app, If you like it, please give an Star.
+
 
 ## Screenshots
 
