@@ -17,7 +17,7 @@ Type Converters: Room provides default type converters for common data types, bu
 
 I provided a brief overview of how Room works:
 
-## How to Use
+## How to Use [3-Step]
 All you need to know about adding drift to your project.
 
 1. Creating Entity
@@ -27,6 +27,7 @@ Annotations or decorators to specify how the entity should be mapped to the data
 To work with Drift in your project, Now, you'll need a DatabaseClass that serves as the main connection to the database. This class should include references to all the tables you intend to use and acts as the main point for Drift's code generation.
 
 4. Create a Database Repository and Query Functions and Generate.
+   
    **Generate Code**
 
     ```bash
@@ -95,13 +96,13 @@ part 'app_database.g.dart'; // Generated file
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    // Will create the db on Document Directory as app.sqflte
+    // Will create the db on Document Directory as app.sqlite
     final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'app.db'));
+    final file = File(p.join(dbFolder.path, 'app.sqlite'));
     return NativeDatabase(file);
   });
 }
-
+//Tables can be seperated by comma.
 @DriftDatabase(tables: [Songs])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
