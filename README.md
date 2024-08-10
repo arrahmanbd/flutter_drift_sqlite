@@ -23,72 +23,19 @@ I provided a brief overview of how Room works:
 
 [Drift](https://drift.simonbinder.eu/docs/getting-started/)
 
-
-
-
-## Packages
-
-Packages I used in this project 
-
-```bash
-  drift: ^2.13.0
-  sqlite3_flutter_libs: ^0.5.0
-  path_provider: ^2.0.0
-  path: ^1.8.3
-  flutter_riverpod: ^2.4.9
-```
-Using on dev dependency:
-
-```bash
-  drift_dev: ^2.13.0
-  build_runner: ^2.4.6
-```
-
-
 ## How to Use
 All you need to know about adding drift to your project.
 
 1. Creating Entity
 Annotations or decorators to specify how the entity should be mapped to the database.
 
-```dart
-  class Notes extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get title => text().named('note_title')();
-  TextColumn get note => text().named('note')();
-  IntColumn get isArchive => integer().named('isArchive')();
-  BoolColumn get isFavorite => boolean().named('isFavorite')();
-  DateTimeColumn get edited => dateTime().named('edited')();
-}
-```
-2. Create a DatabaseClass for Drift
-To work with Drift in your project, you'll need a DatabaseClass that serves as the main connection to the database. This class should include references to all the tables you intend to use and acts as the main point for Drift's code generation. For this example, let's assume the DatabaseClass is defined in a file named database.dart, located somewhere under the lib/ directory. Feel free to place this class in any Dart file of your choice.
+3. Create a DatabaseClass for Drift
+To work with Drift in your project, Now, you'll need a DatabaseClass that serves as the main connection to the database. This class should include references to all the tables you intend to use and acts as the main point for Drift's code generation.
 
-```dart
-part 'database.g.dart';
+4. Create a Database Repository and Query Functions
+5. Congratulations!!! You are ready to use AppDatabase.
 
-LazyDatabase _openConnection() {
-  // the LazyDatabase util lets us find the right location for the file async.
-  return LazyDatabase(() async {
-    // put the database file, called db.sqlite here, into the documents folder
-    // for your app.
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(path.join(dbFolder.path, 'note.sqlite'));
-    return NativeDatabase.createInBackground(file);
-  });
-}
-
-@DriftDatabase(tables: [Notes])
-class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
-
-  @override
-  int get schemaVersion => 1;
-}
-```
-3. You are ready to use AppDatabase.
-
-## CheatSheet
+## 	🧑🏿‍💻 CheatSheet
 ### **1\. Setting Up Drift**
 
 **Add Dependencies:**
@@ -127,6 +74,9 @@ class Songs extends Table {
   BlobColumn get picture => blob().named('picture')();
   // Text column for the title, cannot be null
   TextColumn get title => text().named('title').customConstraint('NOT NULL')();
+  //boolean value
+  BoolColumn get isFavorite => boolean().named('isFavorite')();
+  DateTimeColumn get edited => dateTime().named('edited')();
 }
 ```
 
@@ -145,6 +95,7 @@ part 'app_database.g.dart'; // Generated file
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
+    // Will create the db on Document Directory as app.sqflte
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'app.db'));
     return NativeDatabase(file);
