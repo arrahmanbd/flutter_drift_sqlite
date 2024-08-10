@@ -43,11 +43,7 @@ Using on dev dependency:
   drift_dev: ^2.13.0
   build_runner: ^2.4.6
 ```
-Generating Code:
 
-```bash
-    dart run build_runner build -d  
-```
 
 ## How to Use
 All you need to know about adding drift to your project.
@@ -91,6 +87,7 @@ class AppDatabase extends _$AppDatabase {
 }
 ```
 3. You are ready to use AppDatabase.
+
 ## CheatSheet
 ### **1\. Setting Up Drift**
 
@@ -106,7 +103,11 @@ dev_dependencies:
   drift_dev: ^<latest_version>
   build_runner: ^<latest_version>
 ```
+**Generate: **
 
+```bash
+    dart run build_runner build -d  
+```
 ### **2\. Defining Tables**
 
 **Creating a Table:**
@@ -122,6 +123,10 @@ class Songs extends Table {
   TextColumn get album => text().nullable()();
   TextColumn get genre => text().nullable()();
   TextColumn get folder => text()();
+ // Use BlobColumn for binary data for the picture (e.g., album art)
+  BlobColumn get picture => blob().named('picture')();
+  // Text column for the title, cannot be null
+  TextColumn get title => text().named('title').customConstraint('NOT NULL')();
 }
 ```
 
