@@ -17,12 +17,6 @@ Type Converters: Room provides default type converters for common data types, bu
 
 I provided a brief overview of how Room works:
 
-
-
-## Cookbook of Drift
-
-[Drift](https://drift.simonbinder.eu/docs/getting-started/)
-
 ## How to Use
 All you need to know about adding drift to your project.
 
@@ -32,8 +26,18 @@ Annotations or decorators to specify how the entity should be mapped to the data
 3. Create a DatabaseClass for Drift
 To work with Drift in your project, Now, you'll need a DatabaseClass that serves as the main connection to the database. This class should include references to all the tables you intend to use and acts as the main point for Drift's code generation.
 
-4. Create a Database Repository and Query Functions
-5. Congratulations!!! You are ready to use AppDatabase.
+4. Create a Database Repository and Query Functions and Generate.
+   **Generate Code**
+
+    ```bash
+    dart run build_runner build -d  
+    ```
+6. Congratulations!!! You are ready to use AppDatabase.
+
+
+## Cookbook of Drift
+
+[Drift](https://drift.simonbinder.eu/docs/getting-started/)
 
 ## 	🧑🏿‍💻 CheatSheet
 ### **1\. Setting Up Drift**
@@ -50,11 +54,7 @@ dev_dependencies:
   drift_dev: ^<latest_version>
   build_runner: ^<latest_version>
 ```
-**Generate: **
 
-```bash
-    dart run build_runner build -d  
-```
 ### **2\. Defining Tables**
 
 **Creating a Table:**
@@ -70,7 +70,7 @@ class Songs extends Table {
   TextColumn get album => text().nullable()();
   TextColumn get genre => text().nullable()();
   TextColumn get folder => text()();
- // Use BlobColumn for binary data for the picture (e.g., album art)
+  // Use BlobColumn for binary data for the picture (e.g., album art)
   BlobColumn get picture => blob().named('picture')();
   // Text column for the title, cannot be null
   TextColumn get title => text().named('title').customConstraint('NOT NULL')();
